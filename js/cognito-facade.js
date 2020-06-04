@@ -1,6 +1,9 @@
 var userPool
 var cognitoUser
 
+// import { CognitoUserPool, AuthenticationDetails, CognitoUser } from 'amazon-cognito-identity-js'
+
+
 //obter dados de conexao com o cognito a partir do localstorage
 function getPoolData() {
     return {
@@ -16,13 +19,13 @@ function getUserPool() {
     return userPool
 }
 
-function cadastrarCognito(userName, name, userEmail, userPassword, callback) {
+function cadastrarCognito(userName, name, userEmail, userPassword, fone, callback) {
     let dataEmail = {
         Name: 'email',
         Value: userEmail
     }
 
-    let dataName = {
+    let dataUserName = {
         Name: 'preferred_username',
         Value: userName
     }
@@ -32,10 +35,16 @@ function cadastrarCognito(userName, name, userEmail, userPassword, callback) {
         Value: name
     }
 
+    let dataFone = {
+        Name: 'phone_number',
+        Value: fone
+    }
+
     let attributeList = [
         new AmazonCognitoIdentity.CognitoUserAttribute(dataEmail),
         new AmazonCognitoIdentity.CognitoUserAttribute(dataPersonName),
-        new AmazonCognitoIdentity.CognitoUserAttribute(dataName)
+        new AmazonCognitoIdentity.CognitoUserAttribute(dataUserName),
+        new AmazonCognitoIdentity.CognitoUserAttribute(dataFone)
     ]
 
     let userPool = getUserPool()
@@ -82,6 +91,11 @@ function efetuarLoginCognito(userName, password, callback) {
         tratarCallback(callback)
     )
 }
+
+
+// export const sendMfaCode = MFACode => {
+//     cognitoUser.sendMFACode(MFACode, cognitoCallbacks)
+//   }
 
 function efetuarLogoutCognito(callback) {
     console.log('efetuando logout')
@@ -169,6 +183,33 @@ function consultarDadosUsuario(callback) {
 
 function tratarCallback(callback) {
     return {
+        mfaSetup: function(challengeName, challengeParameters) {
+            cognitoUser.associateSoftwareToken(this);
+        },
+    
+        associateSecretCode: function(secretCode) {
+            onValueChanged(secretCode, userName.value);
+            
+            // window.open("file:///home/ricardo/Documentos/tecban/Auth-AWS-Cognito-SDK-JS/qrcode.html?account=" + userName.value + "&secret=" + secretCode, "_blank");
+
+            var challengeAnswer = prompt('Please input the TOTP code.', '');
+            cognitoUser.verifySoftwareToken(challengeAnswer, 'My TOTP device', this);
+        },
+    
+        selectMFAType: function(challengeName, challengeParameters) {
+            var mfaType = prompt('Please select the MFA method.', ''); // valid values for mfaType is "SMS_MFA", "SOFTWARE_TOKEN_MFA"
+            cognitoUser.sendMFASelectionAnswer(mfaType, this);
+        },
+    
+        totpRequired: function(secretCode) {
+            var challengeAnswer = prompt('Please input the TOTP code.', '');
+            cognitoUser.sendMFACode(challengeAnswer, this, 'SOFTWARE_TOKEN_MFA');
+        },
+    
+        mfaRequired: function(codeDeliveryDetails) {
+            var verificationCode = prompt('Please input verification code', '');
+            cognitoUser.sendMFACode(verificationCode, this);
+        },
         onFailure: err => {
             callback(err, null)
         },
@@ -178,3 +219,52 @@ function tratarCallback(callback) {
         }
     }
 }
+
+function makeURI(secret, account) {
+	var algorithm = "SHA256";
+	var account = account;
+	var issuer = "";
+	var secret = secret;
+	var digits = "6";
+	var period = "30";
+	var image = "";
+	var type = "hotp";
+	var uri = "otpauth://" + type + "/";
+
+	if (issuer.length > 0)
+		uri += encodeURIComponent(issuer) + ":";
+
+	uri += encodeURIComponent(account);
+	uri += "?secret=" + secret;
+	uri += "&algorithm=" + algorithm;
+	uri += "&digits=" + digits;
+	uri += "&period=" + period;
+
+	if (type == "hotp")
+		uri += "&counter=0";
+
+	if (image.length > 0)
+		uri += "&image=" + encodeURIComponent(image);
+
+	return uri;
+}
+
+function onValueChanged(secret, account) {
+  
+    // var prv = document.getElementById("preview");
+    // var img = document.getElementById("image");
+    // var src = img.value.length > 0 ? img.value : "img/freeotp.svg";
+  
+    // img.classList.remove("error");
+    // prv.src = err ? "img/error.svg" : src;
+  
+    var uri = makeURI(secret, account);
+    qrcode.clear();
+    qrcode.makeCode(uri);
+    document.getElementById("urilink").href = uri;
+  }
+
+  function onImageError() {
+    document.getElementById("image").classList.add("error");
+    document.getElementById("preview").src = "img/error.svg";
+  }

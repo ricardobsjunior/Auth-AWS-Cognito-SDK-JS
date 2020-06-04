@@ -90,6 +90,7 @@ function modalFormulario(){
 	let username = $("#userName").val();
 	let name = $("#name").val();
 	let email =  $("#userEmail").val();
+	let fone = $('#fone').val();
 	let code =  $("#userConfirmationCode").val();
 	let password =  $("#userPassword").val();
 	let newPassword = $("#newUserPassword").val();
@@ -100,7 +101,7 @@ function modalFormulario(){
 	case "cadastrarUsuario":
 		message = `Usuário <i>${username}</i> cadastrado!`;
 		callback = criarCallBack(message, username, email, "No", "Cadastrado");	
-		cadastrarCognito(username,name, email, password, callback);
+		cadastrarCognito(username,name, email, password, fone, callback);
 		break;
 	
 	case "confirmarCadastro":
@@ -130,7 +131,7 @@ function modalFormulario(){
 
 		esqueciSenhaCognito(username, callback);
 
-		configurarModalFormulario(true, false, false, false, true, true, "confirmarEsqueciSenha", 
+		configurarModalFormulario(true, false, false, false, false, true, true, "confirmarEsqueciSenha", 
 					"Senha resetada")
 		return ; // keep the modal visible
 
@@ -147,10 +148,11 @@ function modalFormulario(){
 }
 
 //atualizar campos a serem exibidos no modal
-function configurarModalFormulario(showUserName,showName, showEmail, showPassword, showNewPassword, showConfirm, buttonText, title){
+function configurarModalFormulario(showUserName,showName, showEmail, showFone, showPassword, showNewPassword, showConfirm, buttonText, title){
 	visibility("userNameDiv", showUserName);
 	visibility("nameDiv", showName);
 	visibility("userEmailDiv", showEmail);
+	visibility("foneDiv", showFone);
 	if (showNewPassword){
 		visibility("userNewPasswordDiv", true);
 		$("#passwordLabel").text("Senha atual"); 
@@ -177,17 +179,17 @@ function toggleShowPassword(checkBoxId, inputId){
 }
 //cadastrar
 function cadastrarUsuario(){
-	configurarModalFormulario(true,true, true, true, false, false, "cadastrarUsuario", "Cadastrar novo usuário");
+	configurarModalFormulario(true,true, true, true, true, false, false, "cadastrarUsuario", "Cadastrar novo usuário");
 }
 
 //confirmar cadastro
 function confirmarCadastro() {
-	configurarModalFormulario(true,false, false, false, false, true, "confirmarCadastro", "Confirmar cadastro");
+	configurarModalFormulario(true,false, false, false, false, false, true, "confirmarCadastro", "Confirmar cadastro");
 }
 
 //login
 function efetuarLogin() {
-	configurarModalFormulario(true,false,false, true, false, false, "efetuarLogin", "Efetuar login");
+	configurarModalFormulario(true,false,false, false, true, false, false, "efetuarLogin", "Efetuar login");
 }
 
 //logout
@@ -200,12 +202,12 @@ function efetuarLogout() {
 
 //trocar senha
 function trocarSenha(){
-	configurarModalFormulario(false,false, false, true, true, false, "trocarSenha", "Trocar senha");	
+	configurarModalFormulario(false,false, false, false, true, true, false, "trocarSenha", "Trocar senha");	
 }
 
 //esqueci senha
 function esqueciSenha(){
-	configurarModalFormulario(true, false,false, false, false, false, "esqueciSenha", "Esqueci a senha");		
+	configurarModalFormulario(true, false,false, false, false, false, false, "esqueciSenha", "Esqueci a senha");		
 }
 
 //apagar usuário
